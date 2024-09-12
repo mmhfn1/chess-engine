@@ -24,10 +24,29 @@ def main():
     gs = ChessEngine.GameState()
     loadImages() #only run once before while loop
     running = True
+    sqSelected = () #no square is selected keeps track of the last square selected by the user. tuple(row, col)
+    playerClicks = [] #keeps track of player clicks. two tuples [(row, col), (row, col)]. eg: [(6, 4), (4, 4)]
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            elif e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos() #location of the mouse
+                col = location[0]//SQ_SIZE
+                row = location[1]//SQ_SIZE
+                if sqSelected == (row, col): #select if square has already been selected
+                    sqSelected = () #deselect
+                    playerClicks = [] #reset player moves
+                else:
+                    sqSelected = (row, col)
+                    playerClicks.append(sqSelected) #append for first and second clicks
+                if len(playerClicks) == 2: #after second click
+                    move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.Board)
+                    print(move.getChessNotation())
+                    gs.makeMove(move) #reset clicks
+                    sqSelected = () #reset moves made by player
+                    playerClicks = []
+
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)
         p.display.flip()
@@ -44,7 +63,7 @@ def drawBoard(screen):
         for c in range(DIMENSION):
             color = colors[((r+c)%2)]
             p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
+            
 #draws pieces on the board as present in GameState.Board
 def drawPieces(screen, Board):
     for row in range(DIMENSION):
